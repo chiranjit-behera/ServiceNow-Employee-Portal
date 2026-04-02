@@ -31,7 +31,7 @@ export default function CatalogItem() {
   } = useCatalogStore();
 
   console.log(JSON.stringify(selectedItem, null, 2));
-  
+
 
   const [qty, setQty] = useState(1);
 
@@ -95,12 +95,17 @@ export default function CatalogItem() {
               </button>
             </div>
 
-            {/* {desc ? (
-              <div className="mt-6">
-                <div className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{desc}</div>
-              </div>
-            ) : null} */}
+            {/* <img src={icon} alt="icon" /> */}
             
+            {desc ? (
+              <div className="mt-6">
+                <div
+                  className="text-sm text-slate-700 dark:text-slate-300"
+                  dangerouslySetInnerHTML={{ __html: desc }}
+                />
+              </div>
+            ) : null}
+
           </section>
 
           <aside className="bg-surface border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm h-fit">
