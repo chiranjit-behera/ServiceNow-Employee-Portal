@@ -1,21 +1,28 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, List, FileWarning, ShoppingBag, CheckCircle, HelpCircle } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const isAdmin = roles.includes('admin');
+  const isItil = roles.includes('itil');
+  const isBasicEmployee = user?.sys_class_name === 'sys_user' && !isAdmin && !isItil;
+
   const menuItems = [
-    { name: 'Dashboard', path: '/', icon: Home },
+    ...(isBasicEmployee ? [] : [{ name: 'Dashboard', path: '/', icon: Home }]),
     { name: 'Incidents', path: '/incidents', icon: List },
-    { name: 'Problems', path: '/problems', icon: FileWarning },
+    ...(isBasicEmployee ? [] : [{ name: 'Problems', path: '/problems', icon: FileWarning }]),
     { name: 'Request Items', path: '/requests', icon: ShoppingBag },
-    { name: 'Approvals', path: '/approvals', icon: CheckCircle },
+    ...(isBasicEmployee ? [] : [{ name: 'Approvals', path: '/approvals', icon: CheckCircle }]),
   ];
 
   return (
     <aside className="w-65 bg-surface h-full border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300">
       <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-700">
-        <div onClick={() => navigate('/')} className="flex items-center gap-2">
+        <div onClick={() => navigate(isBasicEmployee ? '/incidents' : '/')} className="flex items-center gap-2">
           <div className="w-10 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-xl cursor-pointer">
             ESC
           </div>

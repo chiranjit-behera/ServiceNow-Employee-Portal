@@ -29,7 +29,7 @@ export const useAuthStore = create(
           // Attempt to fetch specific user details requested
           let userDetails = {};
           try {
-            const userRes = await fetch(`/api/now/table/sys_user?sysparm_query=user_name=${username}&sysparm_limit=1&sysparm_fields=first_name,last_name,email,mobile_phone,name,sys_id`, {
+            const userRes = await fetch(`/api/now/table/sys_user?sysparm_query=user_name=${username}&sysparm_limit=1&sysparm_fields=first_name,last_name,email,mobile_phone,name,sys_id,sys_class_name`, {
               headers: {
                 'Authorization': basicAuthToken,
                 'Accept': 'application/json'
@@ -46,6 +46,7 @@ export const useAuthStore = create(
                   mobile_phone: u.mobile_phone || u.phone || '',
                   name: u.name || '',
                   sys_id: u.sys_id || '',
+                  sys_class_name: u.sys_class_name || '',
                   roles: []
                 };
                 

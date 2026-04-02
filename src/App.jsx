@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/Layout/AppLayout';
+import { useAuthStore } from './store/authStore';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import IncidentList from './pages/IncidentList';
@@ -21,6 +22,12 @@ const Placeholder = ({ title }) => (
 );
 
 const App = () => {
+  const user = useAuthStore((s) => s.user);
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const isAdmin = roles.includes('admin');
+  const isItil = roles.includes('itil');
+  const isBasicEmployee = user?.sys_class_name === 'sys_user' && !isAdmin && !isItil;
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -29,14 +36,14 @@ const App = () => {
       <Route element={<ProtectedRoute />}>
         {/* Layout Wrapper */}
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={isBasicEmployee ? <Navigate to="/incidents" replace /> : <Dashboard />} />
           <Route path="/incidents" element={<IncidentList />} />
-          <Route path="/problems" element={<ProblemList />} />
+          <Route path="/problems" element={isBasicEmployee ? <Navigate to="/incidents" replace /> : <ProblemList />} />
           <Route path="/requests" element={<RequestList />} />
-          <Route path="/approvals" element={<Approvals />} />
+          <Route path="/approvals" element={isBasicEmployee ? <Navigate to="/incidents" replace /> : <Approvals />} />
           <Route path="/profile" element={<ProfilePage />} />
           {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to={isBasicEmployee ? '/incidents' : '/'} replace />} />
         </Route>
       </Route>
     </Routes>

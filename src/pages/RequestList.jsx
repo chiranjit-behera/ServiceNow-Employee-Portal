@@ -3,6 +3,7 @@ import { useRequestedItemStore } from '../store/requestedItemStore';
 import withListView from '../hoc/withListView';
 import ListViewShell from '../components/ListViewShell';
 import { Loader2, ShoppingBag, Clock, CheckCircle, Package } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 
 const STATE_LABELS = {
   '1': 'Pending Approval',
@@ -64,6 +65,11 @@ const RequestListBase = ({
   setFilters: setFilterState,
 }) => {
   const [cancellingId, setCancellingId] = useState(null);
+  const user = useAuthStore((s) => s.user);
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const isAdmin = roles.includes('admin');
+  const isItil = roles.includes('itil');
+  const isBasicEmployee = user?.sys_class_name === 'sys_user' && !isAdmin && !isItil;
 
   const activeFilterCount = filterState !== 'All' ? 1 : 0;
 
@@ -142,18 +148,22 @@ const RequestListBase = ({
         <thead>
           <tr className="bg-slate-800/50 text-slate-300 text-xs uppercase tracking-wider">
             <th className="px-6 py-4 font-medium">RITM</th>
+            <th className="px-6 py-4 font-medium">Request</th>
             <th className="px-6 py-4 font-medium">Item</th>
             <th className="px-6 py-4 font-medium">Qty</th>
             <th className="px-6 py-4 font-medium">Status</th>
             <th className="px-6 py-4 font-medium">Approval</th>
             <th className="px-6 py-4 font-medium">Requested On</th>
-            <th className="px-6 py-4 font-medium">Action</th>
+            {!isBasicEmployee ? <th className="px-6 py-4 font-medium">Action</th> : null}
           </tr>
         </thead>
       )}
       renderRow={(item) => (
         <tr key={item.sys_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
           <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">{item.number}</td>
+          <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">
+            {safeValue(item.request) || '—'}
+          </td>
           <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-xs truncate">
             {safeValue(item.cat_item) || '(Empty)'}
           </td>
@@ -161,38 +171,40 @@ const RequestListBase = ({
           <td className="px-6 py-4">{getStateBadge(item.state)}</td>
           <td className="px-6 py-4">{getStateBadge(item.approval)}</td>
           <td className="px-6 py-4 text-sm text-slate-500">{new Date(item.sys_created_on).toLocaleDateString()}</td>
-          <td className="px-6 py-4 flex gap-2">
-            {isRequestedState(item.approval) ? (
-              <button
-                onClick={() => handleApprove(item.sys_id)}
-                disabled={cancellingId === item.sys_id}
-                className="text-xs text-green-400 hover:text-green-300 border border-green-400/30 hover:border-green-400/60 px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
-              >
-                {cancellingId === item.sys_id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                Approve
-              </button>
-            ) : (
-              <span className="text-xs text-slate-600">—</span>
-            )}
+          {!isBasicEmployee ? (
+            <td className="px-6 py-4 flex gap-2">
+              {isRequestedState(item.approval) ? (
+                <button
+                  onClick={() => handleApprove(item.sys_id)}
+                  disabled={cancellingId === item.sys_id}
+                  className="text-xs text-green-400 hover:text-green-300 border border-green-400/30 hover:border-green-400/60 px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                >
+                  {cancellingId === item.sys_id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  Approve
+                </button>
+              ) : (
+                <span className="text-xs text-slate-600">—</span>
+              )}
 
-            {isRequestedState(item.approval) ? (
-              <button
-                onClick={() => handleReject(item.sys_id)}
-                disabled={cancellingId === item.sys_id}
-                className="text-xs text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/60 px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
-              >
-                {cancellingId === item.sys_id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                Reject
-              </button>
-            ) : (
-              <span className="text-xs text-slate-600">—</span>
-            )}
-          </td>
+              {isRequestedState(item.approval) ? (
+                <button
+                  onClick={() => handleReject(item.sys_id)}
+                  disabled={cancellingId === item.sys_id}
+                  className="text-xs text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/60 px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                >
+                  {cancellingId === item.sys_id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  Reject
+                </button>
+              ) : (
+                <span className="text-xs text-slate-600">—</span>
+              )}
+            </td>
+          ) : null}
         </tr>
       )}
       renderEmpty={({ debouncedSearch }) => (
         <tr>
-          <td colSpan="6" className="px-6 py-12 text-center">
+          <td colSpan={isBasicEmployee ? 7 : 8} className="px-6 py-12 text-center">
             <ShoppingBag className="w-10 h-10 mx-auto mb-3 text-slate-600 opacity-50" />
             <p className="text-slate-500">{debouncedSearch ? 'No requests match your search.' : "You haven't submitted any requests yet."}</p>
           </td>
@@ -221,6 +233,7 @@ export default withListView({
       if (
         !(
           (item.number && item.number.toLowerCase().includes(q)) ||
+          (safeValue(item.request) && safeValue(item.request).toLowerCase().includes(q)) ||
           (safeValue(item.cat_item) && safeValue(item.cat_item).toLowerCase().includes(q))
         )
       ) {

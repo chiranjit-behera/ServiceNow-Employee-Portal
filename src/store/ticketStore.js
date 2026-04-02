@@ -18,10 +18,17 @@ export const useTicketStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const isAdmin = user?.roles?.includes('admin');
-      // Admin sees all active incidents; ITIL sees only those assigned to them
+      const isItil = user?.roles?.includes('itil');
+      const isBasicEmployee = user?.sys_class_name === 'sys_user' && !isAdmin && !isItil;
+
+      // Admin sees all active incidents; ITIL sees assigned_to; basic employee sees caller_id
       const query = isAdmin
         ? 'active=true^ORDERBYDESCsys_created_on'
-        : `active=true^assigned_to=${user?.sys_id}^ORDERBYDESCsys_created_on`;
+        : isItil
+          ? `active=true^assigned_to=${user?.sys_id}^ORDERBYDESCsys_created_on`
+          : isBasicEmployee
+            ? `active=true^caller_id=${user?.sys_id}^ORDERBYDESCsys_created_on`
+            : `active=true^caller_id=${user?.sys_id}^ORDERBYDESCsys_created_on`;
 
       const response = await serviceNowClient.get(`/table/incident?sysparm_query=${query}`);
       const incidents = response.data.result || [];
