@@ -6,6 +6,10 @@
       "destination": "https://dev318299.service-now.com/api/now/:path*"
     },
     {
+      "source": "/api/sn_sc/:path*",
+      "destination": "https://dev318299.service-now.com/api/sn_sc/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, List, FileWarning, ShoppingBag, CheckCircle, HelpCircle } from 'lucide-react';
+import { Home, List, FileWarning, ShoppingBag, CheckCircle, HelpCircle, Grid3X3 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 const Sidebar = () => {
@@ -15,6 +15,7 @@ const Sidebar = () => {
     ...(isBasicEmployee ? [] : [{ name: 'Dashboard', path: '/', icon: Home }]),
     { name: 'Incidents', path: '/incidents', icon: List },
     ...(isBasicEmployee ? [] : [{ name: 'Problems', path: '/problems', icon: FileWarning }]),
+    { name: 'Catalog', path: '/catalog', icon: Grid3X3 },
     { name: 'Request Items', path: '/requests', icon: ShoppingBag },
     ...(isBasicEmployee ? [] : [{ name: 'Approvals', path: '/approvals', icon: CheckCircle }]),
   ];

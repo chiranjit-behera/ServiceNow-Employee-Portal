@@ -10,6 +10,8 @@ import ProblemList from './pages/ProblemList';
 import RequestList from './pages/RequestList';
 import Approvals from './pages/Approvals';
 import ProfilePage from './pages/ProfilePage';
+import Catalog from './pages/Catalog';
+import CatalogItem from './pages/CatalogItem';
 
 
 // Placeholder components for other pages
@@ -39,6 +41,8 @@ const App = () => {
           <Route path="/" element={isBasicEmployee ? <Navigate to="/incidents" replace /> : <Dashboard />} />
           <Route path="/incidents" element={<IncidentList />} />
           <Route path="/problems" element={isBasicEmployee ? <Navigate to="/incidents" replace /> : <ProblemList />} />
+          <Route path="/catalog" element={<Catalog />} />
+          <Route path="/catalog/:sysId" element={<CatalogItem />} />
           <Route path="/requests" element={<RequestList />} />
           <Route path="/approvals" element={isBasicEmployee ? <Navigate to="/incidents" replace /> : <Approvals />} />
           <Route path="/profile" element={<ProfilePage />} />
