@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/now/:path*",
+      "destination": "https://${SERVICE_NOW_INSTANCE}.service-now.com/api/now/:path*"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
