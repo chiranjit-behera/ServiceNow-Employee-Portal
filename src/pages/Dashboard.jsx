@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { incidents, metrics, isLoading: incidentsLoading, fetchIncidents, createIncident } = useTicketStore(useShallow(state => ({
@@ -35,6 +36,8 @@ const Dashboard = () => {
     isLoading: state.isLoading,
     fetchApprovals: state.fetchApprovals,
   })));
+
+  const navigate = useNavigate();
 
   const user = useAuthStore(state => state.user);
   const isLoading = incidentsLoading || problemsLoading || requestsLoading || approvalsLoading;
@@ -312,7 +315,7 @@ const Dashboard = () => {
           >
             <span className="text-primary text-lg">+</span> Create New Problem
           </button>
-          <button className="w-full text-left px-4 py-3 bg-slate-800/50 hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-200 transition-colors">
+          <button onClick={() => navigate('/approvals')} className="w-full text-left px-4 py-3 bg-slate-800/50 hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-200 transition-colors">
             View My Approvals
           </button>
         </div>
