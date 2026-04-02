@@ -87,4 +87,34 @@ export const useApprovalStore = create((set) => ({
 //       return false;
 //     }
 //   },
+
+  approveApproval: async (sysId) => {
+    try {
+      await serviceNowClient.patch(`/table/sysapproval_approver/${sysId}`, { state: 'approved' }); // Approved
+      set((state) => ({
+        approvals: state.approvals.map(r =>
+          r.sys_id === sysId ? { ...r, state: 'approved' } : r
+        ),
+      }));
+      return true;
+    } catch (error) {
+      console.error('Failed to approve:', error);
+      return false;
+    }
+  },
+
+  rejectApproval: async (sysId) => {
+    try {
+      await serviceNowClient.patch(`/table/sysapproval_approver/${sysId}`, { state: 'rejected' }); 
+      set((state) => ({
+        approvals: state.approvals.map(r =>
+          r.sys_id === sysId ? { ...r, state: 'rejected' } : r
+        ),
+      }));
+      return true;
+    } catch (error) {
+      console.error('Failed to reject:', error);
+      return false;
+    }
+  },
 }));

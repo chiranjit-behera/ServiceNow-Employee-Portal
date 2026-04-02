@@ -4,15 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Loader2, Search, Filter, ShoppingBag, Clock, CheckCircle, XCircle, Package } from 'lucide-react';
 
-const STAGE_LABELS = {
-  'request_approved': 'Approved',
-  'waiting_for_approval': 'Pending Approval',
-  'delivery': 'In Delivery',
-  'cancelled': 'Cancelled',
-  'complete': 'Complete',
-  'waiting': 'Waiting',
-  'request_denied': 'Denied',
-};
+
 
 const STATE_LABELS = {
   '1': 'Pending Approval',
@@ -39,12 +31,14 @@ const getStateBadge = (stateCode) => {
 };
 
 function Approvals() {
-  const { approvals, metrics, isLoading, error, fetchApprovals } = useApprovalStore(useShallow(state => ({
+  const { approvals, metrics, isLoading, error, fetchApprovals, approveApproval, rejectApproval } = useApprovalStore(useShallow(state => ({
     approvals: state.approvals,
     metrics: state.metrics,
     isLoading: state.isLoading,
     error: state.error,
     fetchApprovals: state.fetchApprovals,
+    approveApproval: state.approveApproval,
+    rejectApproval: state.rejectApproval,
   })));
 
   const safeValue = (val) => {
@@ -62,10 +56,7 @@ function Approvals() {
 
   const user = useAuthStore(state => state.user);
 
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [cancellingId, setCancellingId] = useState(null);
-//   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterState, setFilterState] = useState('All');
   const filterRef = useRef(null);
 
@@ -74,26 +65,27 @@ function Approvals() {
   }, [fetchApprovals, user]);
 
   const handleApprove = async (sysId) => {
-    // setCancellingId(sysId);
-    // // NOTE: cancelRequestedItem / approve/reject action is currently not implemented in the store.
-    // // Keep UI responsive and clear the loading state after a short delay.
-    // setTimeout(() => setCancellingId(null), 400);
-    alert('Approve action is not implemented yet. This is a placeholder to show where the approve functionality would be triggered.');
-  };
-  const handleReject = async (sysId) => {
-    // setCancellingId(sysId);
-    // // NOTE: cancelRequestedItem / approve/reject action is currently not implemented in the store.
-    // // Keep UI responsive and clear the loading state after a short delay.
-    // setTimeout(() => setCancellingId(null), 400);
-    alert('Reject action is not implemented yet. This is a placeholder to show where the reject functionality would be triggered.');
+    setCancellingId(sysId);
+    try {
+      await approveApproval(sysId);
+    } catch (error) {
+      console.error('Error approving:', error);
+    } finally {
+      setCancellingId(null);
+    }
   };
 
-  const stats = [
-    { label: 'Total Requests', value: metrics.total, icon: ShoppingBag, color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
-    { label: 'Pending Approval', value: metrics.pending, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-    { label: 'In Progress', value: metrics.inProgress, icon: Package, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-    { label: 'Closed', value: metrics.closed, icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-400/10' },
-  ];
+  const handleReject = async (sysId) => {
+    setCancellingId(sysId);
+    try {
+      await rejectApproval(sysId);
+    } catch (error) {
+      console.error('Error rejecting:', error);
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -144,17 +136,17 @@ function Approvals() {
                 ) : (
                   approvals.map(item => (
                     <tr key={item.sys_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                      <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">{safeValue(item.sysapproval)}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">{safeValue(item.document_id)}</td>
                       <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-xs truncate">{safeValue(item.group)}</td>
                       <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{safeValue(item.approver)}</td>
                       <td className="px-6 py-4">{getStateBadge(item.state)}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">{item.sys_created_on ? new Date(item.sys_created_on).toLocaleDateString() : '—'}</td>
-                      <td className="px-6 py-4">
-                        {(item.state == 'requested') ? (
+                      <td className="px-6 py-4 flex gap-2">
+                        {(item.state == 'Requested') ? (
                           <button
                             onClick={() => handleApprove(item.sys_id)}
                             disabled={cancellingId === item.sys_id}
-                            className="text-xs text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/60 px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                            className="text-xs text-green-400 hover:text-green-300 border border-green-400/30 hover:border-green-400/60 px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
                           >
                             {cancellingId === item.sys_id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                             Approve
@@ -162,7 +154,7 @@ function Approvals() {
                         ) : (
                           <span className="text-xs text-slate-600">—</span>
                         )}
-                        {(item.state == 'requested') ? (
+                        {(item.state == 'Requested') ? (
                           <button
                             onClick={() => handleReject(item.sys_id)}
                             disabled={cancellingId === item.sys_id}
