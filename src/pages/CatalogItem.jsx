@@ -49,23 +49,12 @@ export default function CatalogItem() {
   const handleOrder = async () => {
     const res = await orderNow({ sysId, quantity: qty, variables: {} });
     if (res.ok) {
-      // Give a quick moment for user to see success, then navigate to requests.
       setTimeout(() => navigate('/requests'), 600);
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors text-sm flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-      </div> */}
 
       {selectedIsLoading ? (
         <div className="flex items-center justify-center p-12 text-slate-500">
