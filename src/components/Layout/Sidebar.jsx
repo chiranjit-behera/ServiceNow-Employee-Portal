@@ -1,0 +1,54 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { Home, List, FileWarning, Search, HelpCircle } from 'lucide-react';
+
+const Sidebar = () => {
+  const menuItems = [
+    { name: 'Dashboard', path: '/', icon: Home },
+    { name: 'Incidents', path: '/incidents', icon: List },
+    { name: 'Problems', path: '/problems', icon: FileWarning },
+    { name: 'Request Items', path: '/requests', icon: Search },
+    { name: 'Approvals', path: '/approvals', icon: Search },
+  ];
+
+  return (
+    <aside className="w-64 bg-surface h-full border-r border-slate-700 flex flex-col transition-all duration-300">
+      <div className="h-16 flex items-center px-6 border-b border-slate-700">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-xl cursor-default">
+            S
+          </div>
+          <span className="text-xl font-bold tracking-wide hover:text-white transition-colors cursor-default">Employee Portal</span>
+        </div>
+      </div>
+      
+      <nav className="flex-1 py-6 px-4 space-y-1">
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 group ${
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`
+            }
+          >
+            <item.icon className="mr-3 flex-shrink-0 h-5 w-5 group-hover:scale-110 transition-transform duration-200" aria-hidden="true" />
+            {item.name}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-slate-700">
+        <button className="flex w-full items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors duration-200">
+          <HelpCircle className="mr-3 h-5 w-5" />
+          Help & Support
+        </button>
+      </div>
+    </aside>
+  );
+};
+
+export default Sidebar;
