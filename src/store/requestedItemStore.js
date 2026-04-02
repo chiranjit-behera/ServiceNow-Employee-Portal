@@ -16,6 +16,16 @@ export const useRequestedItemStore = create((set) => ({
   isLoading: false,
   error: null,
 
+  _recalculateMetrics: (requestedItems) => {
+    const safeList = Array.isArray(requestedItems) ? requestedItems : [];
+    const total = safeList.length;
+    const pending = safeList.filter(r => r.state === '1').length;
+    const approved = safeList.filter(r => r.state === '2').length;
+    const inProgress = safeList.filter(r => r.state === '4' || r.state === '-5').length;
+    const closed = safeList.filter(r => r.state === '7' || r.state === '8').length;
+    return { total, pending, approved, inProgress, closed };
+  },
+
   fetchRequestedItems: async (user) => {
     set({ isLoading: true, error: null });
     try {
@@ -28,7 +38,7 @@ export const useRequestedItemStore = create((set) => ({
           : `requested_for=${user?.sys_id}^ORDERBYDESCsys_created_on`;
 
       const response = await serviceNowClient.get(
-        `/table/sc_req_item?sysparm_query=${query}&sysparm_fields=sys_id,number,short_description,description,state,stage,price,cat_item,sys_created_on,request,requested_for,assigned_to,quantity`
+        `/table/sc_req_item?sysparm_query=${query}&sysparm_display_value=true&sysparm_fields=sys_id,number,short_description,description,state,stage,price,cat_item,sys_created_on,request,requested_for,assigned_to,quantity,approval`
       );
       const requestedItems = response.data.result || [];
 
@@ -53,7 +63,7 @@ export const useRequestedItemStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await serviceNowClient.get(
-        `/table/sc_req_item?sysparm_query=requested_for=${userSysId}^ORDERBYDESCsys_created_on&sysparm_fields=sys_id,number,short_description,description,state,stage,price,cat_item,sys_created_on,request,requested_for,quantity`
+        `/table/sc_req_item?sysparm_query=requested_for=${userSysId}^ORDERBYDESCsys_created_on&sysparm_display_value=true&sysparm_fields=sys_id,number,short_description,description,state,stage,price,cat_item,sys_created_on,request,requested_for,quantity,approval`
       );
       const requestedItems = response.data.result || [];
 
@@ -78,13 +88,49 @@ export const useRequestedItemStore = create((set) => ({
     try {
       await serviceNowClient.patch(`/table/sc_req_item/${sysId}`, { state: '8' }); // Closed Incomplete
       set((state) => ({
-        requestedItems: state.requestedItems.map(r =>
-          r.sys_id === sysId ? { ...r, state: '8' } : r
-        ),
+        requestedItems: state.requestedItems.map(r => (r.sys_id === sysId ? { ...r, state: '8' } : r)),
+      }));
+
+      set((state) => ({
+        metrics: state._recalculateMetrics(state.requestedItems),
       }));
       return true;
     } catch (error) {
       console.error('Failed to cancel requested item:', error);
+      return false;
+    }
+  },
+
+  approveRequestedItem: async (sysId) => {
+    try {
+      await serviceNowClient.patch(`/table/sc_req_item/${sysId}`, { approval: 'approved' }); // Approved
+      set((state) => ({
+        requestedItems: state.requestedItems.map(r => (r.sys_id === sysId ? { ...r, approval: 'approved' } : r)),
+      }));
+
+      set((state) => ({
+        metrics: state._recalculateMetrics(state.requestedItems),
+      }));
+      return true;
+    } catch (error) {
+      console.error('Failed to approve requested item:', error);
+      return false;
+    }
+  },
+
+  rejectRequestedItem: async (sysId) => {
+    try {
+      await serviceNowClient.patch(`/table/sc_req_item/${sysId}`, { approval: 'rejected' }); // Rejected
+      set((state) => ({
+        requestedItems: state.requestedItems.map(r => (r.sys_id === sysId ? { ...r, approval: 'approved' } : r)),
+      }));
+
+      set((state) => ({
+        metrics: state._recalculateMetrics(state.requestedItems),
+      }));
+      return true;
+    } catch (error) {
+      console.error('Failed to reject requested item:', error);
       return false;
     }
   },
