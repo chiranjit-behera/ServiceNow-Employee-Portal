@@ -8,6 +8,7 @@ import IncidentList from './pages/IncidentList';
 import ProblemList from './pages/ProblemList';
 import RequestList from './pages/RequestList';
 import Approvals from './pages/Approvals';
+import ProfilePage from './pages/ProfilePage';
 
 
 // Placeholder components for other pages
@@ -33,6 +34,7 @@ const App = () => {
           <Route path="/problems" element={<ProblemList />} />
           <Route path="/requests" element={<RequestList />} />
           <Route path="/approvals" element={<Approvals />} />
+          <Route path="/profile" element={<ProfilePage />} />
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

@@ -1,8 +1,9 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, List, FileWarning, ShoppingBag, CheckCircle, HelpCircle } from 'lucide-react';
 
 const Sidebar = () => {
+  const navigate = useNavigate();
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: Home },
     { name: 'Incidents', path: '/incidents', icon: List },
@@ -14,11 +15,11 @@ const Sidebar = () => {
   return (
     <aside className="w-64 bg-surface h-full border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300">
       <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-xl cursor-default">
+        <div onClick={() => navigate('/')} className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-xl cursor-pointer">
             S
           </div>
-          <span className="text-xl font-bold tracking-wide hover:text-white transition-colors cursor-default">Employee Portal</span>
+          <span className="text-xl font-bold tracking-wide hover:text-white transition-colors cursor-pointer">Employee Portal</span>
         </div>
       </div>
       

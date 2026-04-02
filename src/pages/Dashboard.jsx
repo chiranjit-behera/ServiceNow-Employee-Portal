@@ -37,9 +37,6 @@ const Dashboard = () => {
   })));
 
   const user = useAuthStore(state => state.user);
-
-  // Backward-compatible aggregate loading flag.
-  // (Some JSX sections may still reference `isLoading`; keeping it prevents runtime crashes.)
   const isLoading = incidentsLoading || problemsLoading || requestsLoading || approvalsLoading;
 
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
@@ -49,6 +46,21 @@ const Dashboard = () => {
   const [newProbData, setNewProbData] = useState({ short_description: '', priority: '3', description: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [chartsRefreshSeed, setChartsRefreshSeed] = useState(0);
+
+  const handleRefreshAll = async () => {
+    if (!user) return;
+
+    // Await all fetches so we only trigger chart remount/animation after loading is complete.
+    await Promise.all([
+      Promise.resolve(fetchIncidents(user)),
+      Promise.resolve(fetchProblems(user)),
+      Promise.resolve(fetchRequestedItems(user)),
+      Promise.resolve(fetchApprovals(user)),
+    ]);
+
+    // Defer to next paint so the loading flag has time to turn off.
+    requestAnimationFrame(() => setChartsRefreshSeed((s) => s + 1));
+  };
 
   useEffect(() => {
     if (user) fetchIncidents(user);
@@ -134,14 +146,7 @@ const Dashboard = () => {
           <p className="text-slate-600 dark:text-slate-400">Welcome back, {user?.username || 'User'}. Here's what's happening today.</p>
         </div>
         <button
-          onClick={() => {
-            if (!user) return;
-            fetchIncidents(user);
-            fetchProblems(user);
-            fetchRequestedItems(user);
-            fetchApprovals(user);
-            setChartsRefreshSeed((s) => s + 1);
-          }}
+          onClick={handleRefreshAll}
           className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-200 dark:border-slate-700 flex items-center"
         >
           {incidentsLoading || problemsLoading || requestsLoading || approvalsLoading ? 'Loading...' : 'Refresh Data'}
@@ -161,8 +166,17 @@ const Dashboard = () => {
                 ) : chartData.length > 0 ? (
                   <div className="h-full w-full min-h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                        <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
+                      <LineChart key={`inc-${chartsRefreshSeed}`} data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="#3b82f6"
+                          strokeWidth={3}
+                          isAnimationActive
+                          animationDuration={800}
+                          dot={{ r: 4, strokeWidth: 2 }}
+                          activeDot={{ r: 8 }}
+                        />
                         <CartesianGrid stroke="#334155" strokeDasharray="5 5" vertical={false} />
                         <XAxis dataKey="date" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                         <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
@@ -187,8 +201,17 @@ const Dashboard = () => {
                 ) : problemChartData.length > 0 ? (
                   <div className="h-full w-full min-h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={problemChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                        <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
+                      <LineChart key={`prob-${chartsRefreshSeed}`} data={problemChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="#8b5cf6"
+                          strokeWidth={3}
+                          isAnimationActive
+                          animationDuration={800}
+                          dot={{ r: 4, strokeWidth: 2 }}
+                          activeDot={{ r: 8 }}
+                        />
                         <CartesianGrid stroke="#334155" strokeDasharray="5 5" vertical={false} />
                         <XAxis dataKey="date" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                         <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
@@ -213,8 +236,17 @@ const Dashboard = () => {
                 ) : requestChartData.length > 0 ? (
                   <div className="h-full w-full min-h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={requestChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                        <Line type="monotone" dataKey="count" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
+                      <LineChart key={`req-${chartsRefreshSeed}`} data={requestChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="#06b6d4"
+                          strokeWidth={3}
+                          isAnimationActive
+                          animationDuration={800}
+                          dot={{ r: 4, strokeWidth: 2 }}
+                          activeDot={{ r: 8 }}
+                        />
                         <CartesianGrid stroke="#334155" strokeDasharray="5 5" vertical={false} />
                         <XAxis dataKey="date" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                         <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
@@ -239,8 +271,17 @@ const Dashboard = () => {
                 ) : approvalChartData.length > 0 ? (
                   <div className="h-full w-full min-h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={approvalChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                        <Line type="monotone" dataKey="count" stroke="#22c55e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
+                      <LineChart key={`app-${chartsRefreshSeed}`} data={approvalChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="#22c55e"
+                          strokeWidth={3}
+                          isAnimationActive
+                          animationDuration={800}
+                          dot={{ r: 4, strokeWidth: 2 }}
+                          activeDot={{ r: 8 }}
+                        />
                         <CartesianGrid stroke="#334155" strokeDasharray="5 5" vertical={false} />
                         <XAxis dataKey="date" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                         <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
