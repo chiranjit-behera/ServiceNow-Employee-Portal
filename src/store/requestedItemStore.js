@@ -134,4 +134,16 @@ export const useRequestedItemStore = create((set) => ({
       return false;
     }
   },
+
+  fetchRequestDetails: async (sysId) => {
+    try {
+      const response = await serviceNowClient.get(
+        `/table/sc_request/${sysId}?sysparm_display_value=true`
+      );
+      return response.data.result;
+    } catch (error) {
+      console.error('Failed to fetch request details:', error);
+      return null;
+    }
+  },
 }));

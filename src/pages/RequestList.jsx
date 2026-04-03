@@ -64,6 +64,7 @@ const RequestListBase = ({
   filterRef,
   filters: filterState,
   setFilters: setFilterState,
+  fetchRequestDetails,
 }) => {
   const [cancellingId, setCancellingId] = useState(null);
   const [viewRecord, setViewRecord] = useState(null);
@@ -75,10 +76,37 @@ const RequestListBase = ({
 
   const activeFilterCount = filterState !== 'All' ? 1 : 0;
 
+  console.log(filteredItems);
+  
+
   const handleApprove = async (sysId) => {
     setCancellingId(sysId);
     await approveRequestedItem(sysId);
     setCancellingId(null);
+  };
+
+  const handleRequestClick = async (requestRef) => {
+    if (!requestRef) return;
+    
+    let sysId = null;
+    if (typeof requestRef === 'object') {
+      if (requestRef.value) sysId = requestRef.value;
+      else if (requestRef.sys_id) sysId = requestRef.sys_id;
+      else if (requestRef.link) {
+        const parts = requestRef.link.split('/');
+        sysId = parts[parts.length - 1];
+      }
+    } else {
+      sysId = requestRef;
+    }
+
+    if (!sysId) return;
+    
+    // Fetch and show actual request record
+    const requestRecord = await fetchRequestDetails(sysId);
+    if (requestRecord) {
+      setViewRecord(requestRecord);
+    }
   };
 
   const handleReject = async (sysId) => {
@@ -175,7 +203,7 @@ const RequestListBase = ({
       renderRow={(item) => (
         <tr key={item.sys_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer" >
           <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300" onClick={() => setViewRecord(item)}>{item.number}</td>
-          <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">
+          <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300" onClick={() => handleRequestClick(item.request)}>
             {safeValue(item.request) || '—'}
           </td>
           <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-xs truncate">
@@ -246,6 +274,7 @@ export default withListView({
     fetchList: state.fetchRequestedItems,
     approveRequestedItem: state.approveRequestedItem,
     rejectRequestedItem: state.rejectRequestedItem,
+    fetchRequestDetails: state.fetchRequestDetails,
   }),
   initialFilters: 'All',
   getActiveFilterCount: (f) => (f !== 'All' ? 1 : 0),
