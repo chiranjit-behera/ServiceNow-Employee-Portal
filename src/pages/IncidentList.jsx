@@ -4,6 +4,7 @@ import withListView from '../hoc/withListView';
 import ListViewShell from '../components/ListViewShell';
 import RecordDetailsModal from '../components/RecordDetailsModal';
 import { X, Activity, AlertCircle, Clock, BarChart3 } from 'lucide-react';
+import serviceNowClient from '../api/serviceNowClient';
 
 // ServiceNow incident state codes -> human readable labels
 const STATE_LABELS = {
@@ -38,16 +39,71 @@ const IncidentListBase = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewRecord, setViewRecord] = useState(null);
-  const [newIncData, setNewIncData] = useState({ short_description: '', priority: '3', description: '' });
+  const [newIncData, setNewIncData] = useState({ short_description: '', priority: '3', description: '', caller_id: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [usersList, setUsersList] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [callerSearchTerm, setCallerSearchTerm] = useState('');
+  const [debouncedCallerSearch, setDebouncedCallerSearch] = useState('');
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const callerDropdownRef = React.useRef(null);
+
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const isAdmin = roles.includes('admin');
+  const isItil = roles.includes('itil');
+  const canSelectCaller = isAdmin || isItil;
+
+  // Debounce search effect
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedCallerSearch(callerSearchTerm);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [callerSearchTerm]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (callerDropdownRef.current && !callerDropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  React.useEffect(() => {
+    if (isModalOpen && canSelectCaller && isUserDropdownOpen) {
+      const fetchUsers = async () => {
+         setIsLoadingUsers(true);
+         try {
+           const query = debouncedCallerSearch 
+             ? `active=true^nameLIKE${debouncedCallerSearch}` 
+             : 'active=true';
+           const res = await serviceNowClient.get(`/table/sys_user?sysparm_query=${query}&sysparm_fields=sys_id,name&sysparm_limit=20`);
+           setUsersList(res.data.result || []);
+         } catch (e) {
+           console.error('Failed to fetch users', e);
+         } finally {
+           setIsLoadingUsers(false);
+         }
+      };
+      fetchUsers();
+    }
+  }, [isModalOpen, canSelectCaller, isUserDropdownOpen, debouncedCallerSearch]);
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     const payload = {
       ...newIncData,
-      ...(user?.sys_id ? { caller_id: user.sys_id } : {})
     };
+    
+    if (!canSelectCaller) {
+      payload.caller_id = user?.sys_id;
+    } else if (!payload.caller_id) {
+      payload.caller_id = user?.sys_id; // Default fallback to caller if not selected
+    }
     const success = await createIncident(payload);
     setIsSubmitting(false);
     if(success) {
@@ -213,6 +269,49 @@ const IncidentListBase = ({
               </button>
             </div>
             <form onSubmit={handleCreateSubmit} className="p-6 space-y-5">
+              {canSelectCaller ? (
+                <div ref={callerDropdownRef} className="relative">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Caller</label>
+                  <input
+                    type="text"
+                    value={callerSearchTerm}
+                    onChange={(e) => {
+                      setCallerSearchTerm(e.target.value);
+                      setIsUserDropdownOpen(true);
+                      if(newIncData.caller_id) setNewIncData({ ...newIncData, caller_id: '' });
+                    }}
+                    onFocus={() => setIsUserDropdownOpen(true)}
+                    placeholder="Search caller..."
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                  />
+                  {isUserDropdownOpen ? (
+                    <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                      {isLoadingUsers ? (
+                         <div className="px-4 py-3 text-sm text-slate-400">Loading users...</div>
+                      ) : usersList.length > 0 ? (
+                        <ul>
+                          {usersList.map((u) => (
+                            <li
+                              key={u.sys_id}
+                              onMouseDown={(e) => {
+                                e.preventDefault(); // prevents blur event on input
+                                setNewIncData({ ...newIncData, caller_id: u.sys_id });
+                                setCallerSearchTerm(u.name);
+                                setIsUserDropdownOpen(false);
+                              }}
+                              className="px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 cursor-pointer transition-colors"
+                            >
+                              {u.name}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                         <div className="px-4 py-3 text-sm text-slate-400">No users found</div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Short Description</label>
                 <input
