@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTicketStore } from '../store/ticketStore';
 import withListView from '../hoc/withListView';
 import ListViewShell from '../components/ListViewShell';
+import RecordDetailsModal from '../components/RecordDetailsModal';
 import { X, Activity, AlertCircle, Clock, BarChart3 } from 'lucide-react';
 
 // ServiceNow incident state codes -> human readable labels
@@ -36,6 +37,7 @@ const IncidentListBase = ({
   const safeMetrics = metrics || { active: 0, critical: 0, resolved: 0, canceled: 0 };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewRecord, setViewRecord] = useState(null);
   const [newIncData, setNewIncData] = useState({ short_description: '', priority: '3', description: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -68,6 +70,17 @@ const IncidentListBase = ({
     { label: 'Critical Priority', value: safeMetrics.critical, icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-400/10' },
     { label: 'Resolved', value: safeMetrics.resolved, icon: Clock, color: 'text-green-400', bg: 'bg-green-400/10' },
     { label: 'Canceled', value: safeMetrics.canceled, icon: BarChart3, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+  ];
+
+  const incidentFields = [
+    { label: 'Number', key: 'number' },
+    { label: 'State', key: 'state', render: (val) => getStateLabel(val) },
+    { label: 'Priority', key: 'priority', render: (val) => getPriorityBadge(val) },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Caller', key: 'caller_id', render: (val) => (val && typeof val === 'object') ? val.display_value : (val || '—') },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Short Description', key: 'short_description' },
+    { label: 'Description', key: 'description' },
   ];
 
   return (
@@ -160,8 +173,9 @@ const IncidentListBase = ({
         <tr
           key={inc.sys_id}
           className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer"
+
         >
-          <td className="px-6 py-4 text-sm font-medium text-primary group-hover:text-blue-400">{inc.number}</td>
+          <td className="px-6 py-4 text-sm font-medium text-primary group-hover:text-blue-400" onClick={() => setViewRecord(inc)}>{inc.number}</td>
           <td className="px-6 py-4 text-sm text-slate-300 max-w-md truncate">
             {inc.short_description || '(Empty)'}
           </td>
@@ -178,6 +192,14 @@ const IncidentListBase = ({
         </tr>
       )}
     >
+      <RecordDetailsModal
+        isOpen={!!viewRecord}
+        onClose={() => setViewRecord(null)}
+        title="Incident Details"
+        record={viewRecord}
+        fields={incidentFields}
+      />
+
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-surface border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl relative overflow-hidden transform transition-all">

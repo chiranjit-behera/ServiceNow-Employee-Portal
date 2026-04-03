@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApprovalStore } from '../store/approvalStore';
 import withListView from '../hoc/withListView';
 import ListViewShell from '../components/ListViewShell';
+import RecordDetailsModal from '../components/RecordDetailsModal';
 import { Loader2, ShoppingBag } from 'lucide-react';
 
 
@@ -23,10 +24,10 @@ const getStateBadge = (stateCode) => {
   const s = String(stateCode);
   const cls =
     s === '7' ? 'bg-green-400/10 text-green-400 border-green-400/20' :
-    s === '8' || s === '3' ? 'bg-red-400/10 text-red-400 border-red-400/20' :
-    s === '1' ? 'bg-yellow-400/10 text-yellow-500 border-yellow-400/20' :
-    s === '2' ? 'bg-blue-400/10 text-blue-400 border-blue-400/20' :
-    'bg-slate-400/10 text-slate-400 border-slate-400/20';
+      s === '8' || s === '3' ? 'bg-red-400/10 text-red-400 border-red-400/20' :
+        s === '1' ? 'bg-yellow-400/10 text-yellow-500 border-yellow-400/20' :
+          s === '2' ? 'bg-blue-400/10 text-blue-400 border-blue-400/20' :
+            'bg-slate-400/10 text-slate-400 border-slate-400/20';
   return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${cls}`}>{label}</span>;
 };
 
@@ -66,6 +67,7 @@ const ApprovalsBase = ({
   activeFilterCount,
 }) => {
   const [cancellingId, setCancellingId] = useState(null);
+  const [viewRecord, setViewRecord] = useState(null);
 
   const handleApprove = async (sysId) => {
     setCancellingId(sysId);
@@ -89,6 +91,15 @@ const ApprovalsBase = ({
     }
   };
 
+  const approvalFields = [
+    { label: 'Approval For', key: 'document_id', render: (val) => safeValue(val) },
+    { label: 'State', key: 'state', render: (val) => getStateBadge(val) },
+    { label: 'Approver', key: 'approver', render: (val) => safeValue(val) },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Group', key: 'group', render: (val) => safeValue(val) },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Comments', key: 'comments', render: (val) => val || '—' },
+  ];
 
   return (
     <ListViewShell
@@ -158,9 +169,9 @@ const ApprovalsBase = ({
       renderRow={(item) => (
         <tr
           key={item.sys_id}
-          className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group"
+          className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer"
         >
-          <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">
+          <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300" onClick={() => setViewRecord(item)}>
             {safeValue(item.document_id)}
           </td>
           <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-xs truncate">
@@ -173,7 +184,7 @@ const ApprovalsBase = ({
           <td className="px-6 py-4 text-sm text-slate-500">
             {item.sys_created_on ? new Date(item.sys_created_on).toLocaleDateString() : '—'}
           </td>
-          <td className="px-6 py-4 flex gap-2">
+          <td className="px-6 py-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
             {isRequestedState(item.state) ? (
               <button
                 onClick={() => handleApprove(item.sys_id)}
@@ -212,7 +223,15 @@ const ApprovalsBase = ({
           </td>
         </tr>
       )}
-    />
+    >
+      <RecordDetailsModal
+        isOpen={!!viewRecord}
+        onClose={() => setViewRecord(null)}
+        title="Approval Details"
+        record={viewRecord}
+        fields={approvalFields}
+      />
+    </ListViewShell>
   );
 };
 

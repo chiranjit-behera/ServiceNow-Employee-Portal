@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useProblemStore } from '../store/problemStore';
 import withListView from '../hoc/withListView';
 import ListViewShell from '../components/ListViewShell';
+import RecordDetailsModal from '../components/RecordDetailsModal';
 import { Loader2, X, AlertTriangle, Activity, CheckCircle } from 'lucide-react';
 
 const STATE_LABELS = {
@@ -48,6 +49,7 @@ const ProblemListBase = ({
   activeFilterCount,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewRecord, setViewRecord] = useState(null);
   const [newProbData, setNewProbData] = useState({ short_description: '', priority: '3', description: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,6 +75,17 @@ const ProblemListBase = ({
     { label: 'Open', value: safeMetrics.open, icon: Activity, color: 'text-blue-400', bg: 'bg-blue-400/10' },
     { label: 'In Analysis', value: safeMetrics.inAnalysis, icon: Activity, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
     { label: 'Resolved', value: safeMetrics.resolved, icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-400/10' },
+  ];
+
+  const problemFields = [
+    { label: 'Number', key: 'number' },
+    { label: 'State', key: 'state', render: (val) => getStateLabel(val) },
+    { label: 'Priority', key: 'priority', render: (val) => getPriorityBadge(val) },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Opened By', key: 'opened_by', render: (val) => (val && typeof val === 'object') ? val.display_value : (val || '—') },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Short Description', key: 'short_description' },
+    { label: 'Description', key: 'description' },
   ];
 
   return (
@@ -161,8 +174,8 @@ const ProblemListBase = ({
         </thead>
       )}
       renderRow={(prob) => (
-        <tr key={prob.sys_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group">
-          <td className="px-6 py-4 text-sm font-medium text-purple-400 group-hover:text-purple-300">{prob.number}</td>
+        <tr key={prob.sys_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group" >
+          <td className="px-6 py-4 text-sm font-medium text-purple-400 group-hover:text-purple-300" onClick={() => setViewRecord(prob)}>{prob.number}</td>
           <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-md truncate">{prob.short_description || '(Empty)'}</td>
           <td className="px-6 py-4">{getPriorityBadge(prob.priority)}</td>
           <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{getStateLabel(prob.state)}</td>
@@ -177,6 +190,14 @@ const ProblemListBase = ({
         </tr>
       )}
     >
+      <RecordDetailsModal
+        isOpen={!!viewRecord}
+        onClose={() => setViewRecord(null)}
+        title="Problem Details"
+        record={viewRecord}
+        fields={problemFields}
+      />
+
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
           <div className="bg-surface border border-slate-200 dark:border-slate-700 rounded-xl w-full max-w-lg shadow-2xl">

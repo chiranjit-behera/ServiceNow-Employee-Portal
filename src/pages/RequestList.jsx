@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useRequestedItemStore } from '../store/requestedItemStore';
 import withListView from '../hoc/withListView';
 import ListViewShell from '../components/ListViewShell';
+import RecordDetailsModal from '../components/RecordDetailsModal';
 import { Loader2, ShoppingBag, Clock, CheckCircle, Package } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -65,6 +66,7 @@ const RequestListBase = ({
   setFilters: setFilterState,
 }) => {
   const [cancellingId, setCancellingId] = useState(null);
+  const [viewRecord, setViewRecord] = useState(null);
   const user = useAuthStore((s) => s.user);
   const roles = Array.isArray(user?.roles) ? user.roles : [];
   const isAdmin = roles.includes('admin');
@@ -90,6 +92,18 @@ const RequestListBase = ({
     { label: 'Pending Approval', value: metrics?.pending || 0, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
     { label: 'In Progress', value: metrics?.inProgress || 0, icon: Package, color: 'text-blue-400', bg: 'bg-blue-400/10' },
     { label: 'Closed', value: metrics?.closed || 0, icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-400/10' },
+  ];
+
+  const requestFields = [
+    { label: 'Number', key: 'number' },
+    { label: 'State', key: 'state', render: (val) => getStateBadge(val) },
+    { label: 'Approval', key: 'approval', render: (val) => getStateBadge(val) },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Request', key: 'request', render: (val) => safeValue(val) || '—' },
+    { label: 'Quantity', key: 'quantity', render: (val) => val || 1 },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Item', key: 'cat_item', render: (val) => safeValue(val) || '—' },
+    { label: 'Price', key: 'price', render: (val) => (val && val !== '0') ? val : '—' },
   ];
 
   return (
@@ -159,8 +173,8 @@ const RequestListBase = ({
         </thead>
       )}
       renderRow={(item) => (
-        <tr key={item.sys_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-          <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">{item.number}</td>
+        <tr key={item.sys_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer" >
+          <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300" onClick={() => setViewRecord(item)}>{item.number}</td>
           <td className="px-6 py-4 text-sm font-medium text-cyan-400 group-hover:text-cyan-300">
             {safeValue(item.request) || '—'}
           </td>
@@ -172,7 +186,7 @@ const RequestListBase = ({
           <td className="px-6 py-4">{getStateBadge(item.approval)}</td>
           <td className="px-6 py-4 text-sm text-slate-500">{new Date(item.sys_created_on).toLocaleDateString()}</td>
           {!isBasicEmployee ? (
-            <td className="px-6 py-4 flex gap-2">
+            <td className="px-6 py-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
               {isRequestedState(item.approval) ? (
                 <button
                   onClick={() => handleApprove(item.sys_id)}
@@ -210,7 +224,15 @@ const RequestListBase = ({
           </td>
         </tr>
       )}
-    />
+    >
+      <RecordDetailsModal
+        isOpen={!!viewRecord}
+        onClose={() => setViewRecord(null)}
+        title="Request Details"
+        record={viewRecord}
+        fields={requestFields}
+      />
+    </ListViewShell>
   );
 };
 
