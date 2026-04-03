@@ -30,7 +30,24 @@ export default function CatalogItem() {
     clearOrder,
   } = useCatalogStore();
 
-  console.log(JSON.stringify(selectedItem, null, 2));
+  // console.log(JSON.stringify(selectedItem));
+
+
+  const iconUrl = useMemo(() => {
+    const raw = selectedItem?.icon;
+    if (!raw) return null;
+    const str = typeof raw === 'object' ? (raw.value ?? raw.display_value ?? '') : String(raw);
+    if (!str) return null;
+
+    // Path-based: "images/service_catalog/generic_small.gifx" → serve from root
+    if (str.includes('/')) return `/${str.replace(/x$/, '')}`;
+
+    // Attachment sys_id: "be233993...f1.iix" → use attachment API
+    return `/api/now/attachment/${str.replace(/\.\w+$/, '')}/file`;
+  }, [selectedItem]);
+
+  console.log(iconUrl); // just log the value
+
 
 
   const [qty, setQty] = useState(1);
@@ -84,12 +101,19 @@ export default function CatalogItem() {
               </button>
             </div>
 
-            {/* <img src={icon} alt="icon" /> */}
-            
+            {iconUrl ? (
+              <img
+                src={iconUrl}
+                alt={name}
+                className="w-16 h-16 object-contain rounded-lg mt-4"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : null}
+
             {desc ? (
               <div className="mt-6">
                 <div
-                  className="text-sm text-slate-700 dark:text-slate-300"
+                  className="html-content text-sm text-slate-700 dark:text-slate-300"
                   dangerouslySetInnerHTML={{ __html: desc }}
                 />
               </div>

@@ -9,6 +9,10 @@ export default defineConfig({
       '/api': {
         target: 'https://dev318299.service-now.com',
         changeOrigin: true,
+      },
+      '/images': {
+        target: 'https://dev318299.service-now.com',
+        changeOrigin: true,
       }
     }
   }
