@@ -95,9 +95,9 @@ const ApprovalsBase = ({
     { label: 'Approval For', key: 'document_id', render: (val) => safeValue(val) },
     { label: 'State', key: 'state', render: (val) => getStateBadge(val) },
     { label: 'Approver', key: 'approver', render: (val) => safeValue(val) },
-    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Group', key: 'group', render: (val) => safeValue(val) },
-    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Comments', key: 'comments', render: (val) => val || '—' },
   ];
 
@@ -182,7 +182,7 @@ const ApprovalsBase = ({
           </td>
           <td className="px-6 py-4">{getStateBadge(item.state)}</td>
           <td className="px-6 py-4 text-sm text-slate-500">
-            {item.sys_created_on ? new Date(item.sys_created_on).toLocaleDateString() : '—'}
+            {item.sys_created_on ? new Date(item.sys_created_on).toLocaleDateString('en-GB') : '—'}
           </td>
           <td className="px-6 py-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
             {isRequestedState(item.state) ? (

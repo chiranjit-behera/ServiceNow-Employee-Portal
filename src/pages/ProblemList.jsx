@@ -81,9 +81,9 @@ const ProblemListBase = ({
     { label: 'Number', key: 'number' },
     { label: 'State', key: 'state', render: (val) => getStateLabel(val) },
     { label: 'Priority', key: 'priority', render: (val) => getPriorityBadge(val) },
-    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Opened By', key: 'opened_by', render: (val) => (val && typeof val === 'object') ? val.display_value : (val || '—') },
-    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Short Description', key: 'short_description' },
     { label: 'Description', key: 'description' },
   ];
@@ -179,7 +179,7 @@ const ProblemListBase = ({
           <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-md truncate">{prob.short_description || '(Empty)'}</td>
           <td className="px-6 py-4">{getPriorityBadge(prob.priority)}</td>
           <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{getStateLabel(prob.state)}</td>
-          <td className="px-6 py-4 text-sm text-slate-500">{new Date(prob.sys_created_on).toLocaleDateString()}</td>
+          <td className="px-6 py-4 text-sm text-slate-500">{new Date(prob.sys_created_on).toLocaleDateString('en-GB')}</td>
         </tr>
       )}
       renderEmpty={({ searchTerm, activeFilterCount }) => (

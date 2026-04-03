@@ -126,10 +126,10 @@ const RequestListBase = ({
     { label: 'Number', key: 'number' },
     { label: 'State', key: 'state', render: (val) => getStateBadge(val) },
     { label: 'Approval', key: 'approval', render: (val) => getStateBadge(val) },
-    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Request', key: 'request', render: (val) => safeValue(val) || '—' },
     { label: 'Quantity', key: 'quantity', render: (val) => val || 1 },
-    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Item', key: 'cat_item', render: (val) => safeValue(val) || '—' },
     { label: 'Price', key: 'price', render: (val) => (val && val !== '0') ? val : '—' },
   ];
@@ -212,7 +212,7 @@ const RequestListBase = ({
           <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{item.quantity || 1}</td>
           <td className="px-6 py-4">{getStateBadge(item.state)}</td>
           <td className="px-6 py-4">{getStateBadge(item.approval)}</td>
-          <td className="px-6 py-4 text-sm text-slate-500">{new Date(item.sys_created_on).toLocaleDateString()}</td>
+          <td className="px-6 py-4 text-sm text-slate-500">{new Date(item.sys_created_on).toLocaleDateString('en-GB')}</td>
           {!isBasicEmployee ? (
             <td className="px-6 py-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
               {isRequestedState(item.approval) ? (

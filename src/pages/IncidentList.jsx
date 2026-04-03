@@ -132,9 +132,9 @@ const IncidentListBase = ({
     { label: 'Number', key: 'number' },
     { label: 'State', key: 'state', render: (val) => getStateLabel(val) },
     { label: 'Priority', key: 'priority', render: (val) => getPriorityBadge(val) },
-    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Created', key: 'sys_created_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Caller', key: 'caller_id', render: (val) => (val && typeof val === 'object') ? val.display_value : (val || '—') },
-    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString() : '—' },
+    { label: 'Updated', key: 'sys_updated_on', render: (val) => val ? new Date(val).toLocaleString('en-GB') : '—' },
     { label: 'Short Description', key: 'short_description' },
     { label: 'Description', key: 'description' },
   ];
@@ -237,7 +237,7 @@ const IncidentListBase = ({
           </td>
           <td className="px-6 py-4">{getPriorityBadge(inc.priority)}</td>
           <td className="px-6 py-4 text-sm text-slate-400 dark:text-slate-400">{getStateLabel(inc.state)}</td>
-          <td className="px-6 py-4 text-sm text-slate-500">{new Date(inc.sys_created_on).toLocaleDateString()}</td>
+          <td className="px-6 py-4 text-sm text-slate-500">{new Date(inc.sys_created_on).toLocaleDateString('en-GB')}</td>
         </tr>
       )}
       renderEmpty={({ searchTerm }) => (
