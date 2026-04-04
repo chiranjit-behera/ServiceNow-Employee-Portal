@@ -7,13 +7,78 @@ export const useAuthStore = create(
       user: null,
       isAuthenticated: false,
       error: null,
+      oauthLogin: async (accessToken) => {
+        try {
+          const authHeader = `Bearer ${accessToken}`;
+          // Set user details from basic token if possible, else fetch them.
+          let userDetails = { username: '', authHeader, roles: [] };
+          // Attempt to fetch specific user details using the bearer token
+          try {
+            // Using javascript:gs.getUserID() to get the currently authenticated user's sys_user record
+            const userRes = await fetch(`/api/now/table/sys_user?sysparm_query=sys_id=javascript:gs.getUserID()&sysparm_limit=1&sysparm_fields=user_name,first_name,last_name,email,mobile_phone,name,sys_id,sys_class_name`, {
+              headers: {
+                'Authorization': authHeader,
+                'Accept': 'application/json'
+              }
+            });
+            if (userRes.ok) {
+              const data = await userRes.json();
+              if (data && data.result && data.result.length > 0) {
+                const u = data.result[0];
+                Object.assign(userDetails, {
+                  username: u.user_name || '',
+                  first_name: u.first_name || '',
+                  last_name: u.last_name || '',
+                  email: u.email || '',
+                  mobile_phone: u.mobile_phone || u.phone || '',
+                  name: u.name || '',
+                  sys_id: u.sys_id || '',
+                  sys_class_name: u.sys_class_name || ''
+                });
+                
+                if (userDetails.sys_id) {
+                  try {
+                    const roleRes = await fetch(`/api/now/table/sys_user_has_role?sysparm_query=user=${userDetails.sys_id}&sysparm_display_value=true&sysparm_fields=role`, {
+                      headers: {
+                        'Authorization': authHeader,
+                        'Accept': 'application/json'
+                      }
+                    });
+                    if (roleRes.ok) {
+                      const roleData = await roleRes.json();
+                      if (roleData && roleData.result) {
+                         userDetails.roles = roleData.result.map(r => r.role?.display_value || r.role || '').filter(Boolean).map(r => r.toLowerCase());
+                      }
+                    }
+                  } catch (roleErr) {
+                    console.warn("Could not fetch user roles via OAuth", roleErr);
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.warn("Could not fetch extra user details via OAuth", e);
+          }
+
+          set({
+            user: userDetails,
+            isAuthenticated: true,
+            error: null
+          });
+          return true;
+        } catch (err) {
+          console.error("OAuth Login attempt failed: ", err);
+          set({ error: 'OAuth authentication failed.', isAuthenticated: false });
+          return false;
+        }
+      },
       login: async (username, password) => {
         try {
           const encoded = btoa(`${username}:${password}`);
-          const basicAuthToken = `Basic ${encoded}`;
+          const authHeader = `Basic ${encoded}`;
           const response = await fetch('/api/now/table/incident?sysparm_limit=1', {
             headers: {
-              'Authorization': basicAuthToken,
+              'Authorization': authHeader,
               'Accept': 'application/json'
             }
           });
@@ -31,7 +96,7 @@ export const useAuthStore = create(
           try {
             const userRes = await fetch(`/api/now/table/sys_user?sysparm_query=user_name=${username}&sysparm_limit=1&sysparm_fields=first_name,last_name,email,mobile_phone,name,sys_id,sys_class_name`, {
               headers: {
-                'Authorization': basicAuthToken,
+                'Authorization': authHeader,
                 'Accept': 'application/json'
               }
             });
@@ -54,7 +119,7 @@ export const useAuthStore = create(
                   try {
                     const roleRes = await fetch(`/api/now/table/sys_user_has_role?sysparm_query=user=${userDetails.sys_id}&sysparm_display_value=true&sysparm_fields=role`, {
                       headers: {
-                        'Authorization': basicAuthToken,
+                        'Authorization': authHeader,
                         'Accept': 'application/json'
                       }
                     });
@@ -76,7 +141,7 @@ export const useAuthStore = create(
           }
 
           set({
-            user: { username, basicAuthToken, ...userDetails },
+            user: { username, authHeader, ...userDetails },
             isAuthenticated: true,
             error: null
           });
