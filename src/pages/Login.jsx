@@ -28,7 +28,7 @@ const Login = () => {
       // We will clear the hash and call oauthLogin
       window.history.replaceState(null, '', window.location.pathname);
       if (accessToken) {
-         oauthLogin(accessToken); 
+        oauthLogin(accessToken);
       }
     }
 
@@ -40,7 +40,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Attempt authentication via sys_user proxy
     await login(username, password);
     setIsSubmitting(false);
@@ -49,14 +49,18 @@ const Login = () => {
   const handleOAuthLogin = (provider) => {
     // In a real OAuth setup, this will redirect to ServiceNow's OAuth endpoint
     // which is configured for Multi-Provider SSO (e.g. Google).
-    
+
     // Replace with your actual ServiceNow Instance URL and OAuth Client ID
-    const instanceUrl = 'https://dev318299.service-now.com'; 
-    const clientId = 'YOUR_OAUTH_CLIENT_ID'; 
-    const redirectUri = window.location.origin; // Usually something like /auth/callback
-    
-    const oauthUrl = `${instanceUrl}/oauth_auth.do?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}`;
-    
+    const instanceUrl = 'https://dev318299.service-now.com';
+    const clientId = '1046571810311-st1ahhoomr5lfgng6ggukkib7i3ujmfq.apps.googleusercontent.com'; // <--- IMPORTANT: Replace this with your ServiceNow Client ID
+    const redirectUri = window.location.origin + '/login';
+    const state = Math.random().toString(36).substring(2, 15);
+
+    const oauthUrl = `${instanceUrl}/oauth_auth.do?response_type=token` +
+      `&client_id=${encodeURIComponent(clientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${encodeURIComponent(state)}`;
+
     // Redirect user to ServiceNow to authenticate via Google
     window.location.href = oauthUrl;
   };
@@ -69,7 +73,7 @@ const Login = () => {
 
       <div className="max-w-md w-full relative z-10">
         <div className="bg-surface/60 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 shadow-2xl transition-all duration-300 hover:border-slate-600/50 hover:shadow-primary/5">
-          
+
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-primary to-indigo-600 rounded-xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
               <span className="text-3xl font-bold text-white">S</span>
@@ -173,7 +177,7 @@ const Login = () => {
               Google
             </button>
           </form>
-          
+
           <div className="mt-6 text-center text-xs text-slate-500">
             Powered by ServiceNow REST APIs
           </div>
