@@ -26,7 +26,7 @@ const Placeholder = ({ title }) => (
 const App = () => {
   const user = useAuthStore((s) => s.user);
   const roles = Array.isArray(user?.roles) ? user.roles : [];
-  const isAdmin = roles.includes('admin');
+  const isAdmin = roles.includes('admin') || user?.username === 'admin';
   const isItil = roles.includes('itil');
   const isBasicEmployee = user?.sys_class_name === 'sys_user' && !isAdmin && !isItil;
 

@@ -39,9 +39,20 @@ const fetchUserProfile = async (authHeader) => {
             if (roleRes.ok) {
               const roleData = await roleRes.json();
               userDetails.roles = (roleData?.result || [])
-                .map((r) => r.role?.display_value || r.role || '')
+                .map((r) => {
+                  const roleObj = r.role;
+                  if (typeof roleObj === 'object' && roleObj !== null) {
+                    return roleObj.display_value || roleObj.value || '';
+                  }
+                  return String(roleObj || '');
+                })
                 .filter(Boolean)
                 .map((r) => r.toLowerCase());
+            }
+
+            // Fallback: If username is 'admin', ensure 'admin' role is present
+            if (userDetails.username === 'admin' && !userDetails.roles.includes('admin')) {
+              userDetails.roles.push('admin');
             }
           } catch (roleErr) {
             console.warn('Could not fetch user roles:', roleErr);
@@ -131,14 +142,35 @@ export const useAuthStore = create(
               `/api/now/table/sys_user_has_role` +
               `?sysparm_query=user=${u.sys_id}` +
               `&sysparm_display_value=true&sysparm_fields=role`,
-              { headers: { Authorization: authHeader, Accept: 'application/json' } }
+              { 
+                headers: { 
+                  Authorization: authHeader, 
+                  Accept: 'application/json',
+                  'X-ServiceNow-User': u.user_name // Impersonate the target user while fetching their roles
+                } 
+              }
             );
+            if (roleRes.status === 403) {
+              console.error('Permission denied (403) for sys_user_has_role. Please give the Service Account ' +
+                'the "user_admin" or "admin" role in ServiceNow.');
+            }
             if (roleRes.ok) {
               const roleData = await roleRes.json();
               roles = (roleData?.result || [])
-                .map((r) => r.role?.display_value || r.role || '')
+                .map((r) => {
+                  const roleObj = r.role;
+                  if (typeof roleObj === 'object' && roleObj !== null) {
+                    return roleObj.display_value || roleObj.value || '';
+                  }
+                  return String(roleObj || '');
+                })
                 .filter(Boolean)
                 .map((r) => r.toLowerCase());
+            }
+
+            // Fallback: If username matches admin username from .env, ensure 'admin' role
+            if (u.user_name === 'admin' && !roles.includes('admin')) {
+              roles.push('admin');
             }
           } catch (roleErr) {
             console.warn('Could not fetch roles for Google user:', roleErr);
@@ -157,6 +189,7 @@ export const useAuthStore = create(
               sys_id: u.sys_id || '',
               sys_class_name: u.sys_class_name || '',
               roles,
+              impersonateUser: u.user_name,
             },
             isAuthenticated: true,
             error: null,

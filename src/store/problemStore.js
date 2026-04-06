@@ -16,10 +16,15 @@ export const useProblemStore = create((set) => ({
   fetchProblems: async (user) => {
     set({ isLoading: true, error: null });
     try {
-      const isAdmin = user?.roles?.includes('admin');
+      const roles = Array.isArray(user?.roles) ? user.roles : [];
+      const isAdmin = roles.includes('admin') || user?.username === 'admin';
+      const isItil = roles.includes('itil');
+
       const baseQuery = isAdmin
-        ? 'ORDERBYDESCsys_created_on'
-        : `assigned_to=${user?.sys_id}^ORDERBYDESCsys_created_on`;
+        ? 'sys_id!=null^ORDERBYDESCsys_created_on'
+        : isItil
+          ? `assigned_to=${user?.sys_id}^ORDERBYDESCsys_created_on`
+          : `assigned_to=${user?.sys_id}^ORDERBYDESCsys_created_on`; // Problems are typically ITIL only, but fallback just in case
 
       const response = await serviceNowClient.get(
         `/table/problem?sysparm_query=${baseQuery}&sysparm_fields=sys_id,number,short_description,description,priority,state,sys_created_on,assigned_to,category`

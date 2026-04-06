@@ -48,9 +48,8 @@ const IncidentListBase = ({
   const [debouncedCallerSearch, setDebouncedCallerSearch] = useState('');
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const callerDropdownRef = React.useRef(null);
-
   const roles = Array.isArray(user?.roles) ? user.roles : [];
-  const isAdmin = roles.includes('admin');
+  const isAdmin = roles.includes('admin') || user?.username === 'admin';
   const isItil = roles.includes('itil');
   const canSelectCaller = isAdmin || isItil;
 

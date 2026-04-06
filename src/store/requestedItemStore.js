@@ -29,11 +29,14 @@ export const useRequestedItemStore = create((set) => ({
   fetchRequestedItems: async (user) => {
     set({ isLoading: true, error: null });
     try {
-      const isAdmin = user?.roles?.includes('admin');
+      const roles = Array.isArray(user?.roles) ? user.roles : [];
+      const isAdmin = roles.includes('admin') || user?.username === 'admin';
+      const isItil = roles.includes('itil');
+
       // Admin sees all RITMs; ITIL sees their assigned ones; others see their own requests
       const query = isAdmin
-        ? 'ORDERBYDESCsys_created_on'
-        : user?.roles?.includes('itil')
+        ? 'sys_id!=null^ORDERBYDESCsys_created_on'
+        : isItil
           ? `assigned_to=${user?.sys_id}^ORDERBYDESCsys_created_on`
           : `requested_for=${user?.sys_id}^ORDERBYDESCsys_created_on`;
 

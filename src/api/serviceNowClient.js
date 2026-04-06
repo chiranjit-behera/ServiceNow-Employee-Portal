@@ -11,8 +11,12 @@ const serviceNowClient = axios.create({
 
 serviceNowClient.interceptors.request.use((config) => {
   const { user } = useAuthStore.getState();
-  if (user && user.basicAuthToken) {
-    config.headers['Authorization'] = user.basicAuthToken;
+  if (user && user.authHeader) {
+    config.headers['Authorization'] = user.authHeader;
+    // Handle user impersonation for Service Account based logins (e.g. Google)
+    if (user.impersonateUser) {
+      config.headers['X-ServiceNow-User'] = user.impersonateUser;
+    }
   }
   return config;
 }, (error) => {

@@ -19,12 +19,14 @@ export const useApprovalStore = create((set) => ({
   fetchApprovals: async (user) => {
     set({ isLoading: true, error: null });
     try {
-      const isAdmin = user?.roles?.includes('admin');
-      // Admin sees all RITMs; ITIL sees their assigned ones; others see their own requests
+      const roles = Array.isArray(user?.roles) ? user.roles : [];
+      const isAdmin = roles.includes('admin') || user?.username === 'admin';
+      const isItil = roles.includes('itil');
+
+      // Admin sees all approvals; Others see theirs
       const query = isAdmin
-        ? 'ORDERBYDESCsys_created_on'
-        : user?.roles?.includes('itil')
-          ? `approver=${user?.sys_id}^ORDERBYDESCsys_created_on` : `approver=${user?.sys_id}^ORDERBYDESCsys_created_on`;
+        ? 'sys_id!=null^ORDERBYDESCsys_created_on'
+        : `approver=${user?.sys_id}^ORDERBYDESCsys_created_on`;
 
       const response = await serviceNowClient.get(
         `/table/sysapproval_approver?sysparm_query=${query}&sysparm_fields=sys_id,short_description,description,sysapproval,document_id,group,approver,state,sys_created_on&sysparm_display_value=true`
