@@ -13,7 +13,16 @@ export default defineConfig({
       '/images': {
         target: 'https://dev318299.service-now.com',
         changeOrigin: true,
-      }
+      },
+      // ── OAuth endpoints (needed to avoid CORS on Google token exchange) ──
+      '/oauth_token.do': {
+        target: 'https://dev318299.service-now.com',
+        changeOrigin: true,
+      },
+      '/oauth_auth.do': {
+        target: 'https://dev318299.service-now.com',
+        changeOrigin: true,
+      },
     }
   }
 })
