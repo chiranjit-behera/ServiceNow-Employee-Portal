@@ -87,12 +87,18 @@ const Login = () => {
     }
 
     const state = 'sso|' + Math.random().toString(36).substring(2, 15);
-    const oauthUrl =
+    const ssoId = import.meta.env.VITE_SN_SSO_ID;
+    
+    let oauthUrl =
       `${instanceUrl}/oauth_auth.do?response_type=token` +
       `&client_id=${encodeURIComponent(clientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&scope=user_info` +
       `&state=${encodeURIComponent(state)}`;
+
+    if (ssoId && ssoId !== 'YOUR_SAML_SSO_SYS_ID_HERE') {
+      oauthUrl += `&glide_sso_id=${encodeURIComponent(ssoId)}`;
+    }
 
     window.location.href = oauthUrl;
   };

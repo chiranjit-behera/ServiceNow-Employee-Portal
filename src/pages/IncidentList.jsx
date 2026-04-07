@@ -39,7 +39,7 @@ const IncidentListBase = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewRecord, setViewRecord] = useState(null);
-  const [newIncData, setNewIncData] = useState({ short_description: '', priority: '3', description: '', caller_id: '' });
+  const [newIncData, setNewIncData] = useState({ short_description: '', urgency: '3', impact:'3', description: '', caller_id: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [usersList, setUsersList] = useState([]);
@@ -107,7 +107,7 @@ const IncidentListBase = ({
     setIsSubmitting(false);
     if(success) {
       setIsModalOpen(false);
-      setNewIncData({ short_description: '', priority: '3', description: '' });
+      setNewIncData({ short_description: '', impact: '3', urgency: '3', description: '' });
     }
   };
 
@@ -338,16 +338,27 @@ const IncidentListBase = ({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Priority</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Urgency</label>
                 <select
-                  value={newIncData.priority}
-                  onChange={(e) => setNewIncData({ ...newIncData, priority: e.target.value })}
+                  value={newIncData.urgency}
+                  onChange={(e) => setNewIncData({ ...newIncData, urgency: e.target.value })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                 >
-                  <option value="1">1 - Critical</option>
-                  <option value="2">2 - High</option>
-                  <option value="3">3 - Moderate</option>
-                  <option value="4">4 - Low</option>
+                  <option value="1">1 - High</option>
+                  <option value="2">2 - Moderate</option>
+                  <option value="3">3 - Low</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Impact</label>
+                <select
+                  value={newIncData.impact}
+                  onChange={(e) => setNewIncData({ ...newIncData, impact: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                >
+                  <option value="1">1 - High</option>
+                  <option value="2">2 - Moderate</option>
+                  <option value="3">3 - Low</option>
                 </select>
               </div>
               <div className="pt-4 flex justify-end gap-3">

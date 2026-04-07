@@ -12,8 +12,13 @@ const serviceCatalogClient = axios.create({
 serviceCatalogClient.interceptors.request.use(
   (config) => {
     const { user } = useAuthStore.getState();
-    if (user && user.basicAuthToken) {
-      config.headers.Authorization = user.basicAuthToken;
+    const authHeader = user?.authHeader || user?.basicAuthToken;
+
+    if (authHeader) {
+      config.headers.Authorization = authHeader;
+      if (user?.impersonateUser) {
+        config.headers['X-ServiceNow-User'] = user.impersonateUser;
+      }
     }
     return config;
   },
@@ -21,4 +26,3 @@ serviceCatalogClient.interceptors.request.use(
 );
 
 export default serviceCatalogClient;
-

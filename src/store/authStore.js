@@ -2,6 +2,19 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 
+const decodeJwtPayload = (token) => {
+  const payloadBase64 = token.split('.')[1];
+  if (!payloadBase64) throw new Error('Invalid Google id_token format.');
+
+  const normalizedBase64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+  const paddedBase64 = normalizedBase64.padEnd(
+    normalizedBase64.length + ((4 - (normalizedBase64.length % 4)) % 4),
+    '='
+  );
+
+  return JSON.parse(atob(paddedBase64));
+};
+
 const fetchUserProfile = async (authHeader) => {
   let userDetails = { authHeader, roles: [] };
 
@@ -91,11 +104,7 @@ export const useAuthStore = create(
      
       googleLogin: async (idToken) => {
         try {
-          const payloadBase64 = idToken.split('.')[1];
-          if (!payloadBase64) throw new Error('Invalid Google id_token format.');
-
-          const payloadJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
-          const googleProfile = JSON.parse(payloadJson);
+          const googleProfile = decodeJwtPayload(idToken);
 
           const googleEmail = googleProfile.email;
           const googleName = googleProfile.name || '';
